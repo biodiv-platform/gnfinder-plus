@@ -1,4 +1,4 @@
-# GNFinder Plus
+# 📙 GNFinder Plus
 
 ```sh
 go install
@@ -7,7 +7,7 @@ go build
 
 ### Pre-built binary
 
-Pre build binaries by GitHub Actions can be downloaded by clicking [here](https://github.com/harshzalavadiya/gnfinder-plus/releases/tag/v1.0.0)
+pre-built binaries by GitHub Actions can be downloaded from [releases](https://github.com/harshzalavadiya/gnfinder-plus/releases)
 
 ### Usage
 
