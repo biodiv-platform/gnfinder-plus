@@ -7,6 +7,10 @@ import (
 
 	"code.sajari.com/docconv"
 	"github.com/gnames/gnfinder"
+	"github.com/gnames/gnfinder/config"
+	"github.com/gnames/gnfinder/ent/nlp"
+	"github.com/gnames/gnfinder/io/dict"
+	"github.com/gnames/gnfmt"
 )
 
 func main() {
@@ -21,7 +25,8 @@ func main() {
 	}
 
 	// Run document contents through gnfinder
-	gnf := gnfinder.NewGNfinder()
-	output := gnf.FindNamesJSON([]byte(txt.Body))
-	fmt.Println(string(output))
+	cfg := config.New()
+	gnf := gnfinder.New(cfg, dict.LoadDictionary(), nlp.BayesWeights())
+	output := gnf.Find(txt.Body)
+	fmt.Println(output.Format(gnfmt.PrettyJSON))
 }
