@@ -27,6 +27,6 @@ func main() {
 	// Run document contents through gnfinder
 	cfg := config.New()
 	gnf := gnfinder.New(cfg, dict.LoadDictionary(), nlp.BayesWeights())
-	output := gnf.Find(txt.Body)
+	output := gnf.Find("", txt.Body)
 	fmt.Println(output.Format(gnfmt.PrettyJSON))
 }

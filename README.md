@@ -7,11 +7,19 @@ go build
 
 ### Pre-built binary
 
-pre-built binaries by GitHub Actions can be downloaded from [releases](https://github.com/harshzalavadiya/gnfinder-plus/releases)
+pre-built binaries by GitHub Actions can be downloaded from [releases](https://github.com/biodiv-platform/gnfinder-plus/releases)
 
 ### Usage
 
 ```
 wget https://indiabiodiversity.org/biodiv/content/documents/document-0162468a-7ce7-499e-ac6d-ead2dc273c35/687.pdf
 ./gnfinder-plus -file=687.pdf
+```
+
+### Note
+
+in some cases `pdftotext` bin might be missing please install according to your platform
+
+```sh
+sudo apt install poppler-utils # debian
 ```
