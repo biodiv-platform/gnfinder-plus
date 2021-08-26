@@ -1,5 +1,7 @@
 # 📙 GNFinder Plus
 
+A tiny wrapper parses text from document files like `pdf`, `docx` etc. and passes it to [GNFinder](https://github.com/gnames/gnfinder) for extracting names
+
 ```sh
 go install
 go build
