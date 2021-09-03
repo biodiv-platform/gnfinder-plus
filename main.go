@@ -1,10 +1,16 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"fmt"
+	"io"
 	"log"
+	"mime"
+	"net/http"
+	"net/url"
 	"os"
+	"path/filepath"
 
 	"code.sajari.com/docconv"
 	"github.com/gnames/gnfinder"
@@ -13,39 +19,80 @@ import (
 	"github.com/gnames/gnfinder/io/dict"
 	"github.com/gnames/gnfmt"
 	"github.com/gofiber/fiber/v2"
+	gonanoid "github.com/matoous/go-nanoid/v2"
 )
 
-func parse(filePath string) string {
-	// Attempt to read file
+func getFilePath(response *http.Response) string {
+	mimeType := response.Header.Get("Content-Type")
+	extensions, err := mime.ExtensionsByType(mimeType)
+	filePrefix, _ := gonanoid.New()
+
+	if err != nil || len(extensions) == 0 {
+		return filePrefix
+	}
+
+	return filepath.Join(os.TempDir(), filePrefix+extensions[0])
+}
+
+func downloadFile(URL string) (string, error) {
+	//Get the response bytes from the url
+	response, err := http.Get(URL)
+	if err != nil {
+		return "", err
+	}
+	defer response.Body.Close()
+
+	tmpFile := getFilePath(response)
+
+	if response.StatusCode != 200 {
+		return "", errors.New("received non 200 response code")
+	}
+
+	//Create a empty file
+	file, err := os.Create(tmpFile)
+	if err != nil {
+		return "", err
+	}
+	defer file.Close()
+
+	//Write the bytes to the fiel
+	_, err = io.Copy(file, response.Body)
+	if err != nil {
+		return "", err
+	}
+
+	return tmpFile, nil
+}
+
+// Run document through gnfinder
+func parseDocument(filePath string) string {
+
 	txt, err := docconv.ConvertPath(filePath)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	// Run document contents through gnfinder
 	cfg := config.New()
 	gnf := gnfinder.New(cfg, dict.LoadDictionary(), nlp.BayesWeights())
 	output := gnf.Find("", txt.Body)
+
 	return output.Format(gnfmt.PrettyJSON)
 }
 
+// HTTP Server
 func server(serverPort string) {
 	app := fiber.New()
 
-	app.Post("/parse", func(c *fiber.Ctx) error {
+	app.Get("/parse", func(c *fiber.Ctx) error {
+		fullFilePath := c.Query("file")
 
-		file, err := c.FormFile("file")
-		fullFilePath := os.TempDir() + string(os.PathSeparator) + file.Filename
-
-		if err == nil {
-			c.SaveFile(file, fullFilePath)
-			parsedResponse := parse(fullFilePath)
-			os.Remove(fullFilePath) // housekeeping
-
-			return c.Type("json").SendString(parsedResponse)
+		_, err := url.ParseRequestURI(fullFilePath)
+		if err != nil {
+			return c.SendStatus(fiber.StatusBadRequest)
 		}
 
-		return c.SendStatus(fiber.StatusBadRequest)
+		localPath, _ := downloadFile(fullFilePath)
+		return c.Type("json").SendString(parseDocument(localPath))
 	})
 
 	app.Listen(":" + serverPort)
@@ -61,5 +108,13 @@ func main() {
 		server(*serverPort)
 	}
 
-	fmt.Println(parse(*filePath))
+	_, err := url.ParseRequestURI(*filePath)
+	if err != nil {
+		// local file
+		fmt.Println(parseDocument(*filePath))
+	} else {
+		// remote server
+		localPath, _ := downloadFile(*filePath)
+		fmt.Println(parseDocument(localPath))
+	}
 }

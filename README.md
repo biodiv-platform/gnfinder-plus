@@ -21,7 +21,7 @@ pre-built binaries by GitHub Actions can be downloaded from [releases](https://g
 ./gnfinder-plus
 
 # in another window
-curl -F file=@687.pdf http://localhost:3006/parse
+curl http://localhost:3006/parse?file=url
 ```
 
 #### CLI
