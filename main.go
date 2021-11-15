@@ -64,7 +64,7 @@ func downloadFile(URL string) (string, error) {
 	return tmpFile, nil
 }
 
-// Run document through gnfinder
+// find document and extract text from it
 func parseDocument(filePath string) string {
 
 	txt, err := docconv.ConvertPath(filePath)
@@ -72,9 +72,15 @@ func parseDocument(filePath string) string {
 		log.Fatal(err)
 	}
 
+	return parseText(txt.Body)
+}
+
+// parse names from text through gnfinder
+func parseText(txt string) string {
+
 	cfg := config.New()
 	gnf := gnfinder.New(cfg, dict.LoadDictionary(), nlp.BayesWeights())
-	output := gnf.Find("", txt.Body)
+	output := gnf.Find("", txt)
 
 	return output.Format(gnfmt.PrettyJSON)
 }
@@ -85,6 +91,11 @@ func server(serverPort string) {
 
 	app.Get("/parse", func(c *fiber.Ctx) error {
 		fullFilePath := c.Query("file")
+		queryText := c.Query("text", "_")
+
+		if queryText != "_" {
+			return c.Type("json").SendString(parseText(queryText))
+		}
 
 		_, err := url.ParseRequestURI(fullFilePath)
 		if err != nil {
