@@ -20,6 +20,7 @@ import (
 	"github.com/gnames/gnfmt"
 	"github.com/gofiber/fiber/v2"
 	gonanoid "github.com/matoous/go-nanoid/v2"
+	"github.com/tidwall/gjson"
 )
 
 func getFilePath(response *http.Response) string {
@@ -91,10 +92,15 @@ func server(serverPort string) {
 
 	app.Get("/parse", func(c *fiber.Ctx) error {
 		fullFilePath := c.Query("file")
-		queryText := c.Query("text", "_")
 
-		if queryText != "_" {
-			return c.Type("json").SendString(parseText(queryText))
+		bodyText := gjson.Get(string(c.Body()), "text").String()
+
+		if bodyText == "" {
+			bodyText = c.Query("text")
+		}
+
+		if bodyText != "" {
+			return c.Type("json").SendString(parseText(bodyText))
 		}
 
 		_, err := url.ParseRequestURI(fullFilePath)
